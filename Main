@@ -1,0 +1,423 @@
+// This source code is subject to the terms of the Samuel Steevens. Please request to implement as an algo trading bot
+// © FSTsolutions
+
+//@version=4
+strategy("S1.2 Phone", shorttitle="S1.2 Ring Ring")
+
+//rsi inputs
+rlen = input(14, title="rsiLength", type=input.integer)
+rsrc = input(close, title="rsiSource", type=input.source)
+//cci inputs
+clen = input(defval=20, title="cciLength", type=input.integer)
+csrc = input(ohlc4, title="cciSource", type=input.source)
+//ema inputs
+elenshort = input(12, title="emaLegnthShort", type=input.integer)
+elenmedium = input(28, title="emaLegnthMedium", type=input.integer)
+elenlong = input(50, title="emaLegnthLong", type=input.integer)
+esrc = input(ohlc4, title="emaSource", type=input.source)
+
+//ema callouts
+emas30 = security(syminfo.ticker,"30", sma(esrc,elenshort))
+emam30 = security(syminfo.ticker,"30", ema(esrc,elenmedium))
+emal30 = security(syminfo.ticker,"30", ema(esrc,elenlong))
+
+emas2h = security(syminfo.ticker,"120", ema(esrc,elenshort))
+emam2h = security(syminfo.ticker,"120", ema(esrc,elenmedium))
+emal2h = security(syminfo.ticker,"120", ema(esrc,elenlong))
+
+emas4h = security(syminfo.ticker,"240", ema(esrc,elenshort))
+emam4h = security(syminfo.ticker,"240", ema(esrc,elenmedium))
+emal4h = security(syminfo.ticker,"240", ema(esrc,elenlong))
+
+emas12h = security(syminfo.ticker,"720", ema(esrc,elenshort))
+emam12h = security(syminfo.ticker,"720", ema(esrc,elenmedium))
+emal12h = security(syminfo.ticker,"720", ema(esrc,elenlong))
+
+emas1d = security(syminfo.ticker,"D", ema(esrc,elenshort))
+emam1d = security(syminfo.ticker,"D", ema(esrc,elenmedium))
+emal1d = security(syminfo.ticker,"D", ema(esrc,elenlong))
+
+//ema slope calculations
+Semas30m = ((emas30 - emas30[1]) / 1)
+Semam30m = ((emam30 - emam30[1]) / 1)
+Semal30m = ((emal30 - emal30[4]) / 4)
+
+Semas2h = ((emas2h - emas2h[4]) / 4)
+Semam2h = ((emam2h - emam2h[4]) / 4)
+Semal2h = ((emal2h - emal2h[4]) / 4)
+
+Semas4h = ((emas4h - emas4h[8]) / 8)
+Semam4h = ((emam4h - emam4h[8]) / 8)
+Semal4h = ((emal4h - emal4h[8]) / 8)
+
+Semas12h = ((emas12h - emas12h[72]) / 72)
+Semam12h = ((emam12h - emam12h[72]) / 72)
+Semal12h = ((emal12h - emal12h[72]) / 72)
+
+Semas1d = ((emas1d - emas1d[144]) / 144)
+Semam1d = ((emam1d - emam1d[144]) / 144)
+Semal1d = ((emal1d - emal1d[144]) / 144)
+
+//ema slope therefore momentum
+seam = ((Semas30m*0.22) + (Semam30m*0.33) + (Semal30m*0.66) + (Semas2h*0.33) + (Semam2h*0.6) + (Semal2h*0.88) + (Semas4h*0.88) + (Semam4h*1.1) + Semal4h + (Semas12h*1.66) + (Semam12h*2) + (Semal12h*2.5) + Semas1d + Semam1d)/10
+
+//to show or not to show
+show30m = input(true, title="rsi30m", type=input.bool)
+show2h = input(true, title="rsi2h", type=input.bool)
+show4h = input(true, title="rsi4h", type=input.bool)
+show12h = input(true, title="rsi12h", type=input.bool)
+show1d = input(true, title="rsi1D", type=input.bool)
+show1w = input(true, title="rsi1W", type=input.bool)
+show1m = input(true, title="rsi1M", type=input.bool)
+//cci
+showc30m = input(true, title="cci30m", type=input.bool)
+showc2h = input(true, title="cci2h", type=input.bool)
+showc4h = input(true, title="cci4h", type=input.bool)
+showc12h = input(true, title="cci12h", type=input.bool)
+showc1d = input(true, title="cci1D", type=input.bool)
+showc1w = input(true, title="cci1W", type=input.bool)
+showc1m = input(true, title="cci1M", type=input.bool)
+//slope
+showS30m = input(true, title="Srsi30m", type=input.bool)
+showS2h = input(true, title="Srsi2h", type=input.bool)
+showS4h = input(true, title="Srsi4h", type=input.bool)
+showS12h = input(true, title="Srsi12h", type=input.bool)
+showS1d = input(true, title="Srsi1D", type=input.bool)
+showS1w = input(true, title="Srsi1W", type=input.bool)
+showS1m = input(true, title="Srsi1M", type=input.bool)
+
+showSc30m = input(true, title="Scci30m", type=input.bool)
+showSc2h = input(true, title="Scci2h", type=input.bool)
+showSc4h = input(true, title="Scci4h", type=input.bool)
+showSc12h = input(true, title="Scci12h", type=input.bool)
+showSc1d = input(true, title="Scci1D", type=input.bool)
+showSc1w = input(true, title="Scci1W", type=input.bool)
+showSc1m = input(true, title="Scci1M", type=input.bool)
+
+//get different timeframes
+rsi30mp = security(syminfo.ticker,"30",rsi(rsrc,rlen))
+rsi2hp = security(syminfo.ticker,"120",rsi(rsrc,rlen))
+rsi4hp = security(syminfo.ticker,"240",rsi(rsrc,rlen))
+rsi12hp = security(syminfo.ticker,"720",rsi(rsrc,rlen))
+rsi1dp = security(syminfo.ticker,"D",rsi(rsrc,rlen))
+rsi1wp = security(syminfo.ticker,"W",rsi(rsrc,rlen))
+rsi1mp = security(syminfo.ticker,"M",rsi(rsrc,rlen))
+
+cci30m = security(syminfo.ticker,"30", cci(csrc,clen))
+cci2h = security(syminfo.ticker,"120", cci(csrc,clen))
+cci4h = security(syminfo.ticker,"240", cci(csrc,clen))
+cci12h = security(syminfo.ticker,"720", cci(csrc,clen))
+cci1d = security(syminfo.ticker,"D", cci(csrc,clen))
+cci1w = security(syminfo.ticker,"W", cci(csrc,clen))
+cci1m = security(syminfo.ticker,"M", cci(csrc,clen))
+
+//add a rsi multiplier
+rsi30m = (rsi30mp - 50)*9.5
+rsi2h = (rsi2hp - 50)*9.5
+rsi4h = (rsi4hp - 50)*9.5
+rsi12h = (rsi12hp - 50)*10
+rsi1d = (rsi1dp - 50)*10.1
+rsi1w = (rsi1wp - 50)*10.2
+rsi1m = (rsi1mp - 50)*10.3
+
+//rsi+cci mashup
+
+//Slope gradients, my math is based on a lookback peroid of 4 for 30min-12hour, 6 for 1d-1w and max for 1m. Keeping in mind that my resolution for this indicator is 30min.
+//rsi
+Srsi30m = ((rsi30m - rsi30m[4]) / 4)
+Srsi2h = ((rsi2h - rsi2h[32]) / 32)
+Srsi4h = ((rsi4h - rsi4h[32]) / 32)
+Srsi12h = ((rsi12h - rsi12h[288]) / 288)
+Srsi1d = ((rsi1d - rsi1d[576]) / 576)
+Srsi1w = ((rsi1w - rsi1w[2016]) / 2016)
+Srsi1m = ((rsi1m - rsi1m[5000]) / 5000)
+//cci
+Scci30m = ((cci30m - cci30m[4]) / 4)*0.8
+Scci2h = ((cci2h - cci2h[16]) / 16)*2.5
+Scci4h = ((cci4h - cci4h[32]) / 32)*7
+Scci12h = ((cci12h - cci12h[96]) / 96)*15
+Scci1d = ((cci1d - cci1d[288]) / 288)*35
+Scci1w = ((cci1w - cci1w[2016]) / 2016)*305
+Scci1m = ((cci1m - cci1m[5000]) / 5000)*405
+//as an idea put the 1w and 1m on ema slopes and use that gradient
+
+//now Im gonna combine the rsi and the cci
+rci30m = (rsi30m + cci30m)/2
+rci2h = (rsi2h + cci2h)/2
+rci4h = (rsi4h + cci4h)/2
+rci12h = (rsi12h + cci12h)/2
+rci1d = (rsi1d + cci1d)
+rci1w = (rsi1w + cci1w)
+rci1m = (rsi1m + cci1m)
+
+//Slope of rci
+Srci30m = ((rci30m - rci30m[4]) / 4)
+Srci2h = ((rci2h - rci2h[16]) / 16)*5
+Srci4h = ((rci4h - rci4h[32]) / 32)*10
+Srci12h = ((rci12h - rci12h[188]) / 188)*70
+Srci1d = ((rci1d - rci1d[588]) / 588)*100
+SSrci1d = ((rci1d - rci1d[388]) / 388)*130
+Srci1m = ((rci1m - rci1m[5000]) / 5000)*300
+
+rci23 = ((rci30m + rci2h)/10)+((rci4h+rci12h)/7)+(rci1d/6)
+
+rciema2 = (seam) + rci23
+Srciema2 = ((seam - seam[15]) / 15)*10
+rciema23 = (rciema2 + Srciema2)*0.7
+
+//ema slope combinations
+e30 = (Semas30m*0.2) + (Semam30m*1.3) + (Semal30m) + Semal2h + Semal4h
+
+//seeking the difference between smaller timezone and the next one (rsi+cci=rci)
+avrci30m = (rci30m + rci2h)/2
+drci30m = ((avrci30m+rci30m)-(avrci30m+rci2h))*0.5
+
+avrci2h = (rci2h + rci4h)/2
+drci2h = ((avrci2h+rci2h)-(avrci2h+rci4h))*0.6
+
+avrci4h = (rci4h + rci12h)/2
+drci4h = ((avrci4h+rci4h)-(avrci4h+rci12h))*0.7
+
+avcci12h = (cci12h + cci1d)/2
+cdrci12h = ((avcci12h+cci12h)*1.37)-(avcci12h+cci1d)
+ravrci12h = (rsi12h + rsi1d)/2
+rdrci12h = ((ravrci12h+rsi12h)*1.37)-(ravrci12h+rsi1d)
+drci12h = (cdrci12h + rdrci12h)/5
+
+avcci1d = (cci1d + cci1w)/2
+cdrci1d = ((avcci1d+cci1d)*1.37)-(avcci1d+cci1w)
+ravrci1d = (rsi1d + rsi1w)/2
+rdrci1d = ((ravrci1d+rsi1d)*1.37)-(ravrci1d+rsi1w)
+drci1d = (cdrci1d + rdrci1d)/5
+
+avcci1w = (cci1w + cci1m)/2
+cdrci1w = ((avcci1w+cci1w)*1.37)-(avcci1w+cci1m)
+ravrci1w = (rsi1w + rsi1m)/2
+rdrci1w = ((ravrci1w+rsi1w)*1.37)-(ravrci1w+rsi1m)
+drci1w = (cdrci1w + rdrci1w)/5
+
+//one ring
+
+Sdrci30m = ((drci30m - drci30m[31]) / 31)*-7.77
+ring = ((drci30m)+(drci2h*1.4)+(drci4h*1.2)+(Sdrci30m))
+emaring = ema(ring, 7)
+Semaring = (((emaring - emaring[11]) / 11)*10)
+SSemaring = (((Semaring - Semaring[2]) / 2))
+pb1 = rciema23 + (emaring*0.333) + (Srsi2h*3.3)+(rsi4h/4)
+pb = sma(pb1, 9)
+
+
+ddd30 = (sma(cci30m, 7))
+extremes30m = (ddd30 - cci30m)*-0.33
+ddd2h = (sma(cci2h, 5))
+extremes2h = (ddd2h - cci2h)*-1
+ddd4h = (sma(cci4h, 17))
+extremes4h = (ddd4h - cci4h)*-1.33
+
+ave30pb = (e30 + pb)/2
+de30pb = ((ave30pb+e30)-(ave30pb+pb))
+
+DarkRing = ((extremes4h + extremes2h + extremes30m + (rsi30m*0.5)))*0.5
+
+//plot ema combinations
+//plot(Srci30m, title="rci30", color= #800080 , linewidth=3)
+//plot(Srci2h, title="rci2h", color= #00FFFF, linewidth=3) 
+plot(Srci4h, title="rci4h", color= #0000FF, linewidth=1)
+//plot(Srci12h, title="rci12h", color= #00ff00, style=plot.style_line)
+//plot(Srci1d, title="rci1d", color= #000000, style=plot.style_line)
+//plot(SSrci1d, title="rci1m", color= #aaaaaa, style=plot.style_line)
+
+//plot(Srci1w, title="rci1w", color= #FF0000, style=plot.style_line)
+//plot(Srci1m, title="rci1m", color= #aaaaaa, style=plot.style_line)
+
+//plot combinations
+//plot(rci30m, title="rci30", color= #800080 , linewidth=2)
+//plot(rci2h, title="rci2h", color= #00FFFF, linewidth=2) 
+plot(rci4h, title="rci4h", color= #0000FF, linewidth=2)
+//plot(rci12h, title="rci12h", color= #00ff00, linewidth=2)
+//plot(rci1d, title="rci1d", color= #000000, linewidth=2)
+//plot(rci1w, title="rci1w", color= #FF0000, linewidth=2)
+//plot(rci1m, title="rci1m", color= #aaaaaa, linewidth=2)
+
+smadrci30m = sma(drci30m, 11)
+//plot(smadrci30m, title="rci30", color= #800080 , linewidth=2)
+plot(drci30m, title="rci30", color= #800080 , linewidth=2)
+plot(drci2h, title="rci2h", color= #000000, linewidth=2) 
+plot(drci4h, title="rci4h", color= #0000FF, linewidth=2)
+//plot(drci12h, title="rci12h", color= #00ff00, linewidth=2)
+//plot(drci1d, title="rci1d", color= #000000, linewidth=2)
+//plot(drci1w, title="rci1w", color= #FF0000, linewidth=2)
+
+
+
+//rsi cci plots
+//plot(show30m ? rsi30m : na, title="rsi30m", color= #800080, linewidth=2) 
+//plot(show2h ? rsi2h : na, title="rsi2h", color= #00FFFF, linewidth=2)
+//plot(show4h ? rsi4h : na,  title="rsi4h", color= #0000FF, linewidth=2)
+//plot(show12h ? rsi12h : na, title="rsi12h", color= #00ff00, linewidth=2)
+//plot(show1d ? rsi1d : na, title="rsi1d", color= #000000, linewidth=2)
+//plot(show1w ? rsi1w : na, title="rsi1w", color= #FF0000, linewidth=2)
+//plot(show1m ? rsi1m : na, title="rsi1m", color= #aaaaaa, linewidth=2)
+
+//plot(showc30m ? cci30m : na, title="cci30", color= #800080 , style=plot.style_line)
+//plot(showc2h ? cci2h : na, title="cci2h", color= #00FFFF, style=plot.style_line) 
+plot(showc4h ? cci4h : na, title="cci4h", color= #0000FF, style=plot.style_line)
+//plot(showc12h ? cci12h : na, title="cci12h", color= #00ff00, style=plot.style_line)
+//plot(showc1d ? cci1d : na, title="cci1d", color= #000000, style=plot.style_line)
+//plot(showc1w ? cci1w : na, title="cci1w", color= #FF0000, style=plot.style_line)
+//plot(showc1m ? cci1m : na, title="cci1m", color= #aaaaaa, style=plot.style_line)
+
+//plot gradients
+//plot(showS30m ? Srsi30m : na, title="rsi30m", color= #800080, linewidth=2) 
+//plot(showS2h ? Srsi2h : na, title="rsi2h", color= #00FFFF, linewidth=2)
+//plot(showS4h ? Srsi4h : na,  title="rsi4h", color= #0000FF, linewidth=2)
+//plot(showS12h ? Srsi12h : na, title="rsi12h", color= #00ff00, linewidth=2)
+//plot(showS1d ? Srsi1d : na, title="rsi1d", color= #000000, linewidth=2)
+//plot(showS1w ? Srsi1w : na, title="rsi1w", color= #FF0000, linewidth=2)
+//plot(showS1m ? Srsi1m : na, title="rsi1m", color= #aaaaaa, linewidth=2)
+
+//plot(showSc30m ? Scci30m : na, title="ccii30m", color= #800080) 
+//plot(showSc2h ? Scci2h : na, title="ccii2h", color= #00FFFF)
+//plot(showSc4h ? Scci4h : na,  title="cci4h", color= #0000FF)
+//plot(showSc12h ? Scci12h : na, title="cci12h", color= #00ff00)
+//plot(showSc1d ? Scci1d : na, title="cci1d", color= #000000)
+//plot(showSc1w ? Scci1w : na, title="cci1w", color= #FF0000)
+//plot(showSc1m ? Scci1m : na, title="cci1m", color= #aaaaaa)
+
+//emas slopes
+//plot(Semas30m, title="cci30", color= #800080 , style=plot.style_line)
+//plot(Semam30m, title="cci2h", color= #0000FF, style=plot.style_line) 
+//plot(Semal30m, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(Semas2h, title="cci30", color= #00ff00 , style=plot.style_line)
+//plot(Semam2h, title="cci2h", color= #000000, style=plot.style_line) 
+plot(Semal2h, title="cci4h", color= #FF0000, style=plot.style_line)
+
+//plot(Semas4h, title="cci30", color= #00FFFF , style=plot.style_line)
+plot(Semam4h, title="cci2h", color= #00FFFF, style=plot.style_line) 
+//plot(Semal4h, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(Semas12h, title="cci30", color= #00FFFF , style=plot.style_line)
+//plot(Semam12h, title="cci2h", color= #00FFFF, style=plot.style_line) 
+//plot(Semal12h, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(Semas1d, title="cci30", color= #00FFFF , style=plot.style_line)
+//plot(Semam1d, title="cci2h", color= #00FFFF, style=plot.style_line) 
+//plot(Semal1d, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(Semas1w, title="cci30", color= #00FFFF , style=plot.style_line)
+//plot(Semam1w, title="cci2h", color= #00FFFF, style=plot.style_line) 
+//plot(Semal1w, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(Semas1m, title="cci30", color= #00FFFF , style=plot.style_line)
+//plot(Semam1m, title="cci2h", color= #00FFFF, style=plot.style_line) 
+//plot(Semal1m, title="cci4h", color= #0000FF, style=plot.style_line)
+
+//plot(ring, title="one ring", color= #0000FF, linewidth=2)
+//plot(emaring, title="Ema Ring", color= #00ff00, style=plot.style_line) 
+//plot(Semaring, title="Leading Bitch", color= #00FFFF, linewidth=2) 
+//plot(seam, title="seam", color= #800080 , style=plot.style_line)
+//plot(DarkRing, title="DarkRing", color= #800080 , style=plot.style_line)
+
+//extremes
+//plot(extremes30m, title="extreme30", color= #800080 , style=plot.style_line)
+//plot(extremes2h, title="extreme2h", color= #00FFFF, style=plot.style_line) 
+plot(extremes4h, title="rci4h", color= #0000FF, style=plot.style_line)
+//plot(SSemaring, title="rci12h", color= #00ff00, linewidth=2)
+//plot(rci1d, title="rci1d", color= #000000, style=plot.style_line)
+//plot(rci1w, title="rci1w", color= #FF0000, style=plot.style_line)
+//plot(rci1m, title="rci1m", color= #aaaaaa, style=plot.style_line)
+
+//plot(Sdrci30m, title="cci30", color= #00FFFF , style=plot.style_line)
+
+band1 = hline(0, "Upper Band", color=#787B86, linewidth=3)
+band2 = hline(37, "Upper Band", color=#787B86, linestyle=hline.style_dashed)
+band3 = hline(-37, "Upper Band", color=#787B86, linestyle=hline.style_dashed)
+
+
+//Ok here we go. Enter trade one based on ring crossover
+
+openCondition1 = crossover(ring, -37)
+openCondition2 = crossover(ring, 0)
+openCondition3 = Semaring >= 0
+
+exitCondition1 = crossunder(ring, 37)
+exitCondition2 = crossunder(Semaring, 0)
+
+Long1='{  "message_type": "bot",  "bot_id": 6048199,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+exit1='{  "action": "close_at_market_price",  "message_type": "bot",  "bot_id": 6048199,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+
+inTrade1 = strategy.position_size > 0
+notInTrade1 = strategy.position_size <= 0
+
+if(openCondition1 or openCondition2) and (openCondition3)
+    strategy.entry("long1", strategy.long, when=notInTrade1, alert_message=Long1)
+
+if(exitCondition1 or exitCondition2)
+    strategy.close(id="long1", alert_message=exit1)
+    
+
+// Enter trade2 one based on ring crossover
+openCondition21 = crossover(Semaring, -37)
+openCondition22 = crossover(ring, -37)
+openCondition23 = crossover(DarkRing, -37)
+openCondition222 = crossover(Semaring, 0)
+openCondition232 = crossover(DarkRing, 0)
+
+openCondition24 = Semaring >= -10
+openCondition25 = ring >= -37
+openCondition255 = ring <= 50
+openCondition26 = Semal30m >= -37
+openCondition27 = rci30m > 0
+
+exitCondition21 = crossunder(ring, 37)
+exitCondition22 = crossunder(Semaring, -37)
+exitCondition23 = crossunder(Semaring, -37)
+
+inTrade2 = strategy.position_size > 0
+notInTrade2 = strategy.position_size <= 0
+
+Long2='{  "message_type": "bot",  "bot_id": 6048245,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+exit2='{  "action": "close_at_market_price",  "message_type": "bot",  "bot_id": 6048245,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+
+if((openCondition21 or openCondition22 or openCondition23 or openCondition222) and (openCondition24 and openCondition25 and openCondition255 and openCondition26))
+    strategy.entry("long2", strategy.long, when=notInTrade2, alert_message=Long2)
+
+if(exitCondition21 or exitCondition22)// or exitCondition23)
+    strategy.close(id="long2", alert_message=exit2)
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////// 
+//Enter trades based on cci, rsi, and thier respective gradients slopes    
+////Trade4 
+// drci4h drci2h
+openCondition41 = Semas30m > 0
+openCondition42 = Srsi2h > 0
+openCondition43 = Semas2h > 0
+openCondition44 = Semam30m > 0
+openCondition45 = drci30m > 0
+openCondition46 = Semam30m < 35
+
+openCondition49 = Scci4h > 0
+
+
+exitCondition41 = Semas30m < 0
+exitCondition42 = Srsi2h < 0
+//exitCondition43 = 
+//exitCondition34 = drci4h < 37
+
+inTrade4 = strategy.position_size > 0
+notInTrade4 = strategy.position_size <= 0
+
+Long4='{  "message_type": "bot",  "bot_id": 6048262,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+exit4='{  "action": "close_at_market_price",  "message_type": "bot",  "bot_id": 6048262,  "email_token": "fcbd36bd-02d7-49f4-908f-d61461023d2d",  "delay_seconds": 0}'
+
+if(openCondition41 and openCondition42 and openCondition43 and openCondition44 and openCondition45 and openCondition46)// and openCondition44)
+    strategy.entry("long4", strategy.long, when=notInTrade4, alert_message=Long4)
+
+if(exitCondition41 and exitCondition42)
+    strategy.close(id="long4", alert_message=exit4)
+
